@@ -1,3 +1,5 @@
+/** @OnlyCurrentDoc */
+
 var ui = SpreadsheetApp.getUi();
 
 var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -19,6 +21,12 @@ function onOpen() {
       .addToUi();
 }
 
+function append(sheet, data) {
+  data[0].length = 11;
+  sheet.insertRowBefore(2);
+  sheet.getRange(2,1,1, logSheet.getMaxColumns()).setValues(data);
+}
+
 // Записывает на отдельный лист строку при изменении статуса
 function onEdit(e){
   
@@ -34,12 +42,12 @@ function onEdit(e){
   var rangeRow = statusSheet.getRange(rangeRowNumber, 1, 1, statusSheet.getMaxColumns())
   
   // ставит сегодняшнюю дату
-  statusSheet.getRange(rangeRowNumber, statusColumn + 1).setValue(new Date());
+  statusSheet.getRange(rangeRowNumber, statusColumn + 2).setValue(new Date());
+  
+  var rangeRowData = rangeRow.getValues();
  
   // записывает в историю
-  var logLastRowNumber = getLastCell(logSheet, "A:C");
-  logSheet.insertRowAfter(logLastRowNumber);
-  rangeRow.copyTo(logSheet.getRange(logLastRowNumber + 1, 1));
+  append(logSheet, rangeRowData);
   
   // чистит исходный диапозон
   rangeRow.getCell(1, 6).setValue("FALSE");
@@ -95,7 +103,7 @@ function generateReport() {
        if(services[service] === true) {
         // Список искомых значений
         data = [
-          row[4], // Дата
+          row[5], // Дата
           row[2], // Отделение
           row[1], // Оборудование
           service, // Услуга
@@ -113,17 +121,23 @@ function generateReport() {
 }
 
 function addCartridge() {
+  var rawDate = new Date();
+  var d = rawDate.getDate();
+  var m = rawDate.getMonth() + 1;
+  var y = String(rawDate.getFullYear()).slice(-2);
+  
+  
   var data = [
     "",
     ui.prompt('Введите модель картриджа. Например: Brother TN-1075').getResponseText(),
     ui.prompt('Введите отделение, на которое направлен картридж').getResponseText(),
     'получен от подрядчика',
-    new Date(),
+    '',
+    d + '.' + m + '.' + y,
   ];
   
-  statusSheet.appendRow(data);
+  append(statusSheet, [data]);
   data[0] = '_новый';
-  logSheet.appendRow(data);
+  append(logSheet, [data]);
   
-  // ui.alert(Session.getActiveUser().getEmail());
 }
