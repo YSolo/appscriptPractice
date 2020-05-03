@@ -31,3 +31,18 @@ function getUniqueId() {
   
   return newId;
 }
+
+/**
+ * Returns number of last non-empty row in the given column range
+ * @param {Range} range, which is a colunm (ex: sheet.getRange('A:A'))
+ * @return {integer} numOfRow
+ */
+function getLastFullRow(range) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var values = range.getValues();
+
+  
+  for(var row = values.length; row > 0; row --) {
+    if(values[row-1][0] != '') return row;
+  }
+}
