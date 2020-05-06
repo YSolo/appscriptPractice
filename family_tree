@@ -1,0 +1,30 @@
+function setWidths() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = SpreadsheetApp.getActiveSheet();
+  
+  var cardWidths = [
+    20, // left out margin
+    10, // left inner margin
+    80, // picture width
+    100, // name of field width
+    100, // value of field width
+    10, // right inner margin
+    20, // right outer margin
+  ];
+  
+  var lastColumn = sheet.getMaxColumns();
+  counter = 1;
+  for (var card = 1; card <= lastColumn / 7; card++) {
+    for (width of cardWidths) {
+      sheet.setColumnWidth(counter++, width);
+    }
+  }  
+}
+
+function expand() {
+  var side = 'left';
+  
+  var sheet = SpreadsheetApp.getActiveSheet();
+    
+  sheet.insertColumnsBefore(1, 7);
+}
