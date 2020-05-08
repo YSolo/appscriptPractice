@@ -1,18 +1,5 @@
 /** @OnlyCurrentDoc */
 
-function test() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = SpreadsheetApp.getActiveSheet();
-  
-  var ui = SpreadsheetApp.getUi();
-//  var data = sheet.getRange(2, 1, sheet.getMaxRows(), sheet.getMaxColumns());
-
-//  var operationsSheet = getSheetById(1402392418);
-//  operationsSheet.activate();
-  sheet.deleteRows(5, sheet.getLastRow() - 4);
-
-}
-
 /**
  * If not on register sheet - moves user there
  * If on register sheet - exports all entered cartriges to history
@@ -98,7 +85,7 @@ function sendToBeFilled() {
       return row;
     });
 
-    registerSheet.insertRows(5, filteredCarts.length - 1);
+    if(filteredCarts.length > 1) registerSheet.insertRows(5, filteredCarts.length - 1);
     registerSheet.getRange(5, 1, filteredCarts.length, registerSheet.getLastColumn()).setValues(filteredCarts);
     
     ss.toast('Проверьте правильность данных, когда будет готово - распечатайте и вызовите функцию снова');
@@ -170,7 +157,7 @@ function registerFilled() {
       return row;
     });
 
-    registerSheet.insertRows(5, filteredCarts.length - 1);
+    if(filteredCarts.length > 1) registerSheet.insertRows(5, filteredCarts.length - 1);
     registerSheet.getRange(5, 1, filteredCarts.length, registerSheet.getLastColumn()).setValues(filteredCarts);
     
     ss.toast('Отметьте все операции и, когда будет готово - вызовите функцию снова');
@@ -251,7 +238,7 @@ function sendToClient() {
       return row;
     });
 
-    registerSheet.insertRows(5, filteredCarts.length - 1);
+    if(filteredCarts.length > 1) registerSheet.insertRows(5, filteredCarts.length - 1);
     registerSheet.getRange(5, 1, filteredCarts.length, registerSheet.getLastColumn()).setValues(filteredCarts);
     
     ss.toast('Проверьте правильность данных, когда будет готово - распечатайте и вызовите функцию снова');
@@ -282,10 +269,41 @@ function sendToClient() {
 }
 
 /**
+ * Prompts user to enter division and cartridge name
+ * appends new one to the list in status page
+ * sorst status page
+ */
+function addNewCartridge() {
+  var ui = SpreadsheetApp.getUi();
+  var statusSheetId = 448257713;
+  var statusSheet = getSheetById(statusSheetId);
+  
+  var model = ui.prompt("Введите модель нового картриджа \nнапирмер: 'TN-22'").getResponseText();
+  var division = ui.prompt("Введите адресс отделения, \nнапример: 'Малиновского, 70' \nили 'Николаев - Московская, 39'").getResponseText();
+  var Id = getUniqueId();
+  
+  statusSheet.insertRows(2,1);
+  
+  statusSheet.getRange('A2:G2').setValues([[
+    Id, 
+    model, 
+    division,
+    '=iferror(vlookup(A2;\'История\'!A:G;4;FALSE); "-")',
+    '=iferror(vlookup(A2;\'История\'!A:G;5;FALSE); "-")',
+    '=iferror(vlookup(A2;\'История\'!A:G;7;FALSE); "-")',
+    '=iferror(vlookup(A2;\'История\'!A:H;8;FALSE); "-")',
+    ]]);
+  
+  log([[Id, model, division, "-", "новый", "", new Date(), "закуплен новый"]]);
+  
+  statusSheet.getRange('A2:G').sort(3);
+}
+
+/**
  * If cartridge number is selected - inputs new unique number
  * If elsewhere - redirects to status page and alerts user
  */
-function addOldCartrige() {
+function generateNumber() {
   var ui = SpreadsheetApp.getUi();
   
   var statusSheetId = 448257713;
@@ -304,6 +322,32 @@ function addOldCartrige() {
     statusSheet.activate();
     return;
   }
+}
+
+function addOldCartridge() {
+  var ui = SpreadsheetApp.getUi();
+  var statusSheetId = 448257713;
+  var statusSheet = getSheetById(statusSheetId);
+  
+  var model = ui.prompt("Введите модель нового картриджа \nнапирмер: 'TN-22'").getResponseText();
+  var division = ui.prompt("Введите адресс отделения, \nнапример: 'Малиновского, 70' \nили 'Николаев - Московская, 39'").getResponseText();
+  var Id = getUniqueId();
+  
+  statusSheet.insertRows(2,1);
+  
+  statusSheet.getRange('A2:G2').setValues([[
+    Id, 
+    model, 
+    division,
+    '=iferror(vlookup(A2;\'История\'!A:G;4;FALSE); "-")',
+    '=iferror(vlookup(A2;\'История\'!A:G;5;FALSE); "-")',
+    '=iferror(vlookup(A2;\'История\'!A:G;7;FALSE); "-")',
+    '=iferror(vlookup(A2;\'История\'!A:H;8;FALSE); "-")',
+    ]]);
+  
+  log([[Id, model, division, "-", "", "", new Date(), "присвоили номер старому картриджу"]]);
+  
+  statusSheet.getRange('A2:G').sort(3);
 }
 
 function generateReport() {
@@ -339,4 +383,17 @@ function generateReport() {
     reportSheet.insertRows(6, filteredCarts.length - 1);
     reportSheet.getRange(6, 1, filteredCarts.length, reportSheet.getLastColumn()).setValues(filteredCarts);
   }
+}
+
+function logNoNumber() {
+  var ui = SpreadsheetApp.getUi();
+
+  var model = ui.prompt("Введите модель нового картриджа \nнапирмер: 'TN-22'").getResponseText();
+  var division = ui.prompt("Введите адресс отделения, \nнапример: 'Малиновского, 70' \nили 'Николаев - Московская, 39'").getResponseText();
+  
+  var fill = ui.alert("Была заправка?", ui.ButtonSet.YES_NO);
+  if (fill) log([["неизвестен", model, division, "-", "заправка", "", new Date(), "работа подрядчика на отделении"]]);
+  
+  var recover = ui.alert('Было восстановление?', ui.ButtonSet.YES_NO);
+  if (recover) log([["неизвестен", model, division, "-", "восстановление", "", new Date(), "работа подрядчика на отделении"]]);
 }
