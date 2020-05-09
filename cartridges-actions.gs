@@ -392,8 +392,8 @@ function logNoNumber() {
   var division = ui.prompt("Введите адресс отделения, \nнапример: 'Малиновского, 70' \nили 'Николаев - Московская, 39'").getResponseText();
   
   var fill = ui.alert("Была заправка?", ui.ButtonSet.YES_NO);
-  if (fill) log([["неизвестен", model, division, "-", "заправка", "", new Date(), "работа подрядчика на отделении"]]);
+  if (fill == "YES") log([["неизвестен", model, division, "-", "заправка", "", new Date(), "работа подрядчика на отделении"]]);
   
   var recover = ui.alert('Было восстановление?', ui.ButtonSet.YES_NO);
-  if (recover) log([["неизвестен", model, division, "-", "восстановление", "", new Date(), "работа подрядчика на отделении"]]);
+  if (recover == "YES") log([["неизвестен", model, division, "-", "восстановление", "", new Date(), "работа подрядчика на отделении"]]);
 }
