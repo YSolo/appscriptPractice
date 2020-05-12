@@ -1,0 +1,119 @@
+function doGet(request) {
+  return HtmlService.createTemplateFromFile('Index').evaluate();
+}
+
+/* @Include JavaScript and CSS Files */
+function include(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename)
+      .getContent();
+}
+
+/* @Process Form */
+function processForm(formObject) {
+  var url = "https://docs.google.com/spreadsheets/d/1VnhzWQwMr0HTD7_QD0FNsYh2sJ9CVhs2j7C81hZLBsQ/edit#gid=0";
+  var ss = SpreadsheetApp.openByUrl(url);
+  var ws = ss.getSheetByName("Data");
+
+  ws.appendRow([formObject.local,
+                formObject.direcao,
+                formObject.carro,
+                formObject.quilometragem,
+                formObject.observacao,
+                Utilities.formatDate(new Date(), "GMT-3", "dd/MM/yyyy HH:mm:ss")
+               ]);
+}
+
+_____________________
+
+<!DOCTYPE html>
+<html>
+
+ <script type="text/javascript">
+ function showPosition() {
+        navigator.geolocation.getCurrentPosition(showMap);
+    }
+
+function showMap(position) {
+        // Get location data
+       var latlong = position.coords.latitude + ", " + position.coords.longitude;
+    }
+ </script>
+
+    <head>
+        <base target="_top">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <?!= include('JavaScript'); ?>
+    </head>
+    <body>
+        <div class="container">
+            <div class="row">
+                <div class="col-6">
+                    <form id="myForm" onsubmit="handleFormSubmit(this)">
+                        <p class="h4 mb-4 text-left">Uso Frota</p>
+
+                        <div class="form-group">
+                            <label for="local">Local</label>
+                            <input type="text" class="form-control" id="local" name="local">
+                        </div> 
+
+                        <div class="form-group">
+                            <label for="direcao">Direcao</label>
+                            <select class="form-control" id="direcao" name="direcao">
+                                <option selected disabled hidden style='display: none' value=''></option>
+                                <option value="Chegada">Chegada</option>
+                                <option value="Saida">Saida</option>
+                                <option value="Chegada/Saida">Chegada/Saida</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="carro">Carro</label>
+                            <select class="form-control" id="carro" name="carro">
+                                <option selected disabled hidden style='display: none' value=''></option>
+                                <option value="Opt1">Opt1</option>
+                                <option value="Opt2">Opt2</option>
+                                <option value="Opt3">Opt3</option>
+                            </select>
+                        </div>    
+
+                        <div class="form-group">
+                            <label for="quilometragem">Quilometragem</label>
+                            <input type="text" class="form-control" id="quilometragem" name="quilometragem">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="observacao">Observacao</label>
+                            <input type="text" class="form-control" id="observacao" name="observacao">
+                        </div>
+
+
+                        <button type="submit" class="btn btn-primary btn-block">Enviar</button>
+                    </form>
+
+                    <div id="output"></div>
+                </div>
+            </div>      
+        </div>
+    </body>
+</html>
+
+-------
+
+<script>
+  // Prevent forms from submitting.
+  function preventFormSubmit() {
+    var forms = document.querySelectorAll('form');
+    for (var i = 0; i < forms.length; i++) {
+      forms[i].addEventListener('submit', function(event) {
+      event.preventDefault();
+      });
+    }
+  }
+  window.addEventListener('load', preventFormSubmit);    
+
+
+  function handleFormSubmit(formObject) {
+    google.script.run.processForm(formObject);
+    document.getElementById("myForm").reset();
+  }
+</script>
