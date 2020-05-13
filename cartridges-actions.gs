@@ -76,12 +76,14 @@ function sendToBeFilled() {
     var statusSheet = getSheetById(448257713);
     var carts = statusSheet.getRange('A2:G').getValues();
     
+    var rowCounter = 5
     var filteredCarts = carts.filter(function(row) {
       return (row[4] === "Получен на заправку" && 
         row[3] === base);
     }).map(function(row) {
       row = row.splice(0,3);
       row.length = 7;
+      row[6] = "=iferror(vlookup(A" + rowCounter++ + ";'История'!A:H;8;FALSE); \"-\")"
       return row;
     });
 
@@ -385,6 +387,9 @@ function generateReport() {
   }
 }
 
+/**
+ * Adds operation on cartridge, which is not in the base
+ */
 function logNoNumber() {
   var ui = SpreadsheetApp.getUi();
 
