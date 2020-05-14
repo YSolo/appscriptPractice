@@ -46,3 +46,28 @@ function getLastFullRow(range) {
     if(values[row-1][0] != '') return row;
   }
 }
+
+/**
+ * Takes data in form of multidimentional array and adds it to history sheet.
+ * @param {Array} [[]]
+ */
+function log(data) {
+  var logSheet = getSheetById(743789502);
+  logSheet.insertRows(2, data.length);
+  logSheet.getRange(2, 1, data.length, logSheet.getLastColumn()).setValues(data);
+}
+
+/**
+ * Checks if on given sheet, if not goes there
+ * If moves, gives toast message
+ */
+function moveToSheet(targetSheet, toast) {
+  var ss = SpreadsheetApp.getActive();
+  var targetSheetId = targetSheet.getSheetId();
+  var activeSheetId = SpreadsheetApp.getActiveSheet().getSheetId();
+  
+  if(targetSheetId !== activeSheetId) {
+    targetSheet.activate();
+    toast && ss.toast(toast);
+  } 
+}
