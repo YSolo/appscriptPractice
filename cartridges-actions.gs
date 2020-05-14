@@ -117,6 +117,75 @@ function sendToBeFilled() {
 }
 
 
+/**
+ * 2.1 Populates cartridges to be filled for this base
+ * If not on register sheet - moves user to it
+ * If doesn't have base notifies user and returns
+ * If no cartridges found - notifies user
+ */
+function populateCartridgesToBeFilled() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ui = SpreadsheetApp.getUi();
+
+  var registerSheetId = 400518586
+  var registerSheet = getSheetById(registerSheetId);
+  var baseRange = registerSheet.getRange('B2');
+  var base = baseRange.getValue();
+  
+  var statusSheet = getSheetById(448257713);
+  var carts = statusSheet.getRange('A2:G').getValues();
+  
+  // Move to 2-nd sheet if not there yet
+  moveToSheet(registerSheet);
+  
+  if (!base) {
+    ui.alert('Выберите базу отправки/получения и вызовите функцию снова');
+    baseRange.activate();
+    return;
+  }
+  
+  // If there are cartridges in the list ask if user is sure to update it
+  var filledRows;
+  if(registerSheet.getLastRow() > 4) {
+    var cartNumCol = registerSheet.getRange('A5:A');
+    filledRows = getLastFullRow(cartNumCol);
+  }
+  
+  if (filledRows) {
+    var isConfirmed = ui.alert('Вы уварены, что хотите обновить существующий список?', ui.ButtonSet.YES_NO);
+    if (isConfirmed == 'NO') return;
+  }
+
+  // Look up cartridges to be filled
+  var rowCounter = 5
+  var filteredCarts = carts.filter(function(row) {
+    return (row[4] === "Получен на заправку" && 
+            row[3] === base);
+  })
+  
+  // if found - format them to be logged
+  if (filteredCarts.length) {
+  filteredCarts = filteredCarts.map(function(row) {
+    row = row.splice(0,3);
+    row.length = 7;
+    row[6] = "=iferror(vlookup(A" + rowCounter++ + ";'История'!A:H;8;FALSE); \"-\")"
+    return row;
+  });
+  
+  } else {
+    ui.alert('Картриджи на отправку c этой базы не найдены в списке картриджей');
+    return;
+  }
+  
+  registerSheet.deleteRows(5, registerSheet.getMaxRows() - 4);
+  registerSheet.insertRowsAfter(4, 1);
+  registerSheet.getRange(5, 1, filteredCarts.length, registerSheet.getLastColumn())
+    .setValues(filteredCarts)
+    .setBorder(false, true, false, true, true, false);
+  
+  ss.toast('Проверьте правильность данных, когда будет готово - распечатайте и вызовите функцию "отправить картриджи"');
+}
+
 
 /**
  * If not on register sheet - moves user to it
@@ -387,9 +456,6 @@ function generateReport() {
   }
 }
 
-/**
- * Adds operation on cartridge, which is not in the base
- */
 function logNoNumber() {
   var ui = SpreadsheetApp.getUi();
 
@@ -401,4 +467,9 @@ function logNoNumber() {
   
   var recover = ui.alert('Было восстановление?', ui.ButtonSet.YES_NO);
   if (recover == "YES") log([["неизвестен", model, division, "-", "восстановление", "", new Date(), "работа подрядчика на отделении"]]);
+}
+
+function test() {
+  var sheet = getSheetById(1402392418);
+  
 }
