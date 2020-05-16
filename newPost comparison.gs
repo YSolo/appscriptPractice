@@ -40,17 +40,37 @@ function populateComparisonResult() {
      confirmedNumbers = confirmedNumbers.concat(numbers);
   }
   
-  var filteredTargetData = targetData.filter(function(row) {
-    return (confirmedNumbers.indexOf(row[target.col - 1]) === -1);
-  });
+  // TODO Split to two separate rows
+  var present = [];
+  var notPresent = [];
   
+  for (var row of targetData) {
+    if(numbers.indexOf(row[target.col - 1]) === -1) {
+      notPresent.push(row);
+    } else {
+      present.push(row);
+    }
+  }
   
-  // TODO - Populate into a sheet
+  // Clear and populate sheet with data
   var resultSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Результат');
   resultSheet.clear();
-  var resultRange = resultSheet.getRange(1, 1, filteredTargetData.length, filteredTargetData[0].length);
-  resultRange.setValues(filteredTargetData);
-  ui.alert(filteredTargetData);
+  
+  try {
+    resultSheet.getRange('A1').setValue('Не найденные декларации:').setFontWeight(800);
+    var notPresentRange = resultSheet.getRange(2, 1, notPresent.length, notPresent[0].length);
+    notPresentRange.setValues(notPresent);
+  } catch (error) {
+    Logger.log(error);
+  }
+  
+  try {
+  resultSheet.getRange(notPresent.length + 3, 1).setValue('Найденные декларации:').setFontWeight(800);
+  var presentRange = resultSheet.getRange(notPresent.length + 4, 1, present.length, present[0].length);
+  presentRange.setValues(present);
+  } catch (error) {
+    Logger.log(error);
+  }
 }
 
 function getData() {
