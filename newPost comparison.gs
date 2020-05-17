@@ -34,18 +34,20 @@ function populateComparisonResult() {
      
      var data = tableSheet.getRange(table.range).getValues();
      
-     var numbers = data.filter(function(row) {return Number.isInteger(row[table.col - 1])});
-     numbers = numbers.map(function(row) {return row[table.col - 1]});
+     var numbers = data.filter(function(row) {return Number.isInteger(+row[table.col - 1]) && row[table.col - 1] != ""});
      
+     numbers = numbers.map(function(row) {return row[table.col - 1]});
+
      confirmedNumbers = confirmedNumbers.concat(numbers);
   }
   
-  // TODO Split to two separate rows
+  // Split to two separate rows
   var present = [];
   var notPresent = [];
   
   for (var row of targetData) {
-    if(numbers.indexOf(row[target.col - 1]) === -1) {
+  
+    if(confirmedNumbers.indexOf(row[target.col - 1]) == -1) {
       notPresent.push(row);
     } else {
       present.push(row);
