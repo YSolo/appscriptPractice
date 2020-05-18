@@ -11,6 +11,7 @@ function populateComparisonResult() {
 
   // Receive data from data sheet
   var tables = getData()
+  if (tables === -1) return;
   
   // split target table and rest of data
   var target = tables.splice(0, 1)[0];
@@ -73,12 +74,16 @@ function populateComparisonResult() {
   } catch (error) {
     Logger.log(error);
   }
+  
+  resultSheet.activate();
 }
 
 function getData() {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Данные');
   
   var givenData = sheet.getDataRange().getValues().splice(1);
+  
+  if (givenData.length <= 1) return -1;
   
   return givenData.map(function(row) {
     
