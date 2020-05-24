@@ -1,0 +1,9 @@
+function onOpen() {
+  const ui = SpreadsheetApp.getUi();
+  
+  ui.createMenu('Actions')
+    .addSubMenu(ui.createMenu('Process incoming')
+      .addItem('register request', 'registerRequest')
+      .addItem('discard request', 'discardRequest'))
+    .addToUi()
+}
