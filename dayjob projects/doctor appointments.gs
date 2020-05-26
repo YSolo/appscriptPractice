@@ -160,13 +160,13 @@ function test() {
   const infoSheet = ss.getSheetByName("Информация");
   
   // Input fields
-  const $date = infoSheet.getRange('C1');
-  const $age = infoSheet.getRange('C4');
-  const $analysis = infoSheet.getRange('C6:C9');
+  const $date = infoSheet.getRange('B1');
+  const $age = infoSheet.getRange('B4');
+  const $analysis = infoSheet.getRange('B6:B9');
   
   // get values
   let date = $date.getValue();
-  const age = $age.getValue();
+  const age = $age.getValue() || 18;
   const analysis = $analysis.getValues().filter(function(row) {return row[0]}).map(function(row) {return row[0]});
 
   // get doctors sheets
@@ -194,16 +194,34 @@ function test() {
     return true;
   });
   
+  // If no doctors for the job - let user know
+  if(!filteredDoctorsData.length) ui.alert('В этот период нет врачей, которые делают выбранный набор исследований');
+  
   // Iterate over 5 days starting from the given date
   const printableData = [];
   
   for (let i = 0; i < 5; i++) {
-    let day = date.getDay();
+    const day = date.getDay();
+    
     for (let doctor of filteredDoctorsData) {
       if(doctor.schedule.map(function(row) {return row[0]}).includes(day)){
         let schedule = doctor.schedule.find(function(row) {return row[0] == day});
         
-        printableData.push([new Date(date), doctor.name, schedule[4], schedule[2], schedule[3], ...new Array(132).fill("X")]);
+        let visualSchedule = new Array(132).fill("X");
+
+        // Iterate over 5 min intervals starting from 8
+        let currentTime = new Date(date.setHours(8, 0, 0));
+        let scheduleStartTime = new Date(date.setHours(schedule[2].getHours()));
+        let scheduleEndTime = new Date(date.setHours(schedule[3].getHours()));
+        
+        for (let i = 0; i < 132; i++) {
+          if (scheduleStartTime <= currentTime && scheduleEndTime > currentTime) visualSchedule[i] = "O";
+          
+          currentTime = new Date(currentTime.getTime() + 5 * 60000);
+        }
+        
+        printableData.push([new Date(date), doctor.name, schedule[4], ...visualSchedule]);
+        
       }
     }
        
@@ -211,20 +229,35 @@ function test() {
     date.setDate(date.getDate() + 1);
   }
   
+  infoSheet.setFrozenRows(0);
   try {
     infoSheet.deleteRows(14, infoSheet.getMaxRows() - 13);
   } catch(e) {
   }
   
+  
   infoSheet.insertRowsAfter(13, printableData.length);
-  infoSheet.getRange(14, 1, printableData.length, 137).setValues(printableData).clearFormat().setBorder(false, false, false, true, true, true, 'silver', SpreadsheetApp.BorderStyle.SOLID);
+  infoSheet.getRange(14, 1, printableData.length, 135).setValues(printableData).clearFormat().setBorder(false, false, true, true, true, true, 'white', SpreadsheetApp.BorderStyle.SOLID);
   // Set conditional format rules
   const rules = [];
   const xRule = SpreadsheetApp.newConditionalFormatRule()
     .whenTextEqualTo("X")
-    .setFontColor("silver")
+    .setFontColor("white")
     .setRanges([infoSheet.getRange('D14:EG' + infoSheet.getMaxRows())])
     .build();
   rules.push(xRule);
+  
+  const oRule = SpreadsheetApp.newConditionalFormatRule()
+    .whenTextEqualTo("O")
+    .setBackground("#b6d7a8")
+    .setFontColor("#b6d7a8")
+    .setRanges([infoSheet.getRange('D14:EG' + infoSheet.getMaxRows())])
+    .build();
+  rules.push(oRule);
+    
   infoSheet.setConditionalFormatRules(rules);
+  
+  infoSheet.setFrozenRows(13);
+  
+
 }
