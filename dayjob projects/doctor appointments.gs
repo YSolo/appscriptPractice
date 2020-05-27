@@ -185,6 +185,8 @@ function test() {
   
   // Filter doctors who are qualified
   const filteredDoctorsData = doctorsData.filter(function(doctor) {
+    if (age < doctor.minAge || age > doctor.maxAge) return false;
+
     for (const a of analysis) {
       if(!doctor.analysis.includes(a)) {
         return false
@@ -197,31 +199,61 @@ function test() {
   // If no doctors for the job - let user know
   if(!filteredDoctorsData.length) ui.alert('В этот период нет врачей, которые делают выбранный набор исследований');
   
-  // Iterate over 5 days starting from the given date
+  const journalData = ss.getSheetByName("Журнал").getRange("A2:K").getValues();
+  
+  // Accumulate printable data for 5 days
   const printableData = [];
+  
+  const timeIntervals = [];
+  for (let hours = 8; hours < 19; hours++) {
+    for (let minutes = 0; minutes < 60; minutes += 5) {
+      timeIntervals.push([hours,minutes]);
+    }
+  }
   
   for (let i = 0; i < 5; i++) {
     const day = date.getDay();
     
     for (let doctor of filteredDoctorsData) {
-      if(doctor.schedule.map(function(row) {return row[0]}).includes(day)){
-        let schedule = doctor.schedule.find(function(row) {return row[0] == day});
+      if(doctor.schedule.map(function(row) {return row[0]})
+        .includes(day)) {
+          let schedule = doctor.schedule.find(function(row) {return row[0] == day});
         
-        let visualSchedule = new Array(132).fill("X");
+          let visualSchedule = [];
 
-        // Iterate over 5 min intervals starting from 8
-        let currentTime = new Date(date.setHours(8, 0, 0));
-        let scheduleStartTime = new Date(date.setHours(schedule[2].getHours()));
-        let scheduleEndTime = new Date(date.setHours(schedule[3].getHours()));
-        
-        for (let i = 0; i < 132; i++) {
-          if (scheduleStartTime <= currentTime && scheduleEndTime > currentTime) visualSchedule[i] = "O";
+          // Iterate over 5 min intervals starting from 8
+          let scheduleStartTime = schedule[2];
+          let scheduleEndTime = schedule[3];
+  
+          // Set schedule marks
+          for (let interval of timeIntervals) {
           
-          currentTime = new Date(currentTime.getTime() + 5 * 60000);
-        }
-        
-        printableData.push([new Date(date), doctor.name, schedule[4], ...visualSchedule]);
-        
+            if (scheduleStartTime.getHours() <= interval[0] 
+              && interval[0] < scheduleEndTime.getHours()) {
+                
+              mark = "O";   
+            } else {
+              mark = "X";
+            }
+            
+            visualSchedule.push(mark);
+          }
+          
+          // Set doctor Appointements marks
+          const doctorAppointments = journalData.filter(function(row) {return (row[5] == doctor.name && row[4].getDate() == date.getDate())});
+          
+          if (doctorAppointments.length) {
+            for(let app of doctorAppointments) {
+              const startIndex = timeIntervals.findIndex(function(stamp) {return stamp[0] == app[7].getHours() && stamp[1] == app[7].getMinutes()});
+              const intervals = app[8] / 5;
+              const visual = ["A", ..."P".repeat(intervals - 1).split('')];
+              
+              visualSchedule.splice(startIndex, intervals, ...visual);
+              
+            }
+          }
+          
+          printableData.push([new Date(date), doctor.name, schedule[4], ...visualSchedule]);
       }
     }
        
@@ -229,7 +261,9 @@ function test() {
     date.setDate(date.getDate() + 1);
   }
   
+  // remove frozen pointer to be able to delete rows
   infoSheet.setFrozenRows(0);
+  
   try {
     infoSheet.deleteRows(14, infoSheet.getMaxRows() - 13);
   } catch(e) {
@@ -237,7 +271,9 @@ function test() {
   
   
   infoSheet.insertRowsAfter(13, printableData.length);
-  infoSheet.getRange(14, 1, printableData.length, 135).setValues(printableData).clearFormat().setBorder(false, false, true, true, true, true, 'white', SpreadsheetApp.BorderStyle.SOLID);
+  infoSheet.getRange(14, 1, printableData.length, 135).setValues(printableData).setBorder(false, false, true, true, true, true, 'white', SpreadsheetApp.BorderStyle.SOLID);
+  infoSheet.getRange("A14:C").clearFormat();
+  
   // Set conditional format rules
   const rules = [];
   const xRule = SpreadsheetApp.newConditionalFormatRule()
@@ -255,6 +291,22 @@ function test() {
     .build();
   rules.push(oRule);
     
+  const aRule = SpreadsheetApp.newConditionalFormatRule()
+    .whenTextEqualTo("A")
+    .setBackground("salmon")
+    .setFontColor("salmon")
+    .setRanges([infoSheet.getRange('D14:EG' + infoSheet.getMaxRows())])
+    .build();
+  rules.push(aRule);
+  
+  const pRule = SpreadsheetApp.newConditionalFormatRule()
+    .whenTextEqualTo("P")
+    .setBackground("lightsalmon")
+    .setFontColor("lightsalmon")
+    .setRanges([infoSheet.getRange('D14:EG' + infoSheet.getMaxRows())])
+    .build();
+  rules.push(pRule);  
+  
   infoSheet.setConditionalFormatRules(rules);
   
   infoSheet.setFrozenRows(13);
