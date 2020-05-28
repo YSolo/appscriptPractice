@@ -7,9 +7,9 @@ ui.createMenu('Смарт кнопки')
     .addItem('Создать новое отделение', 'createNew')
     .addItem('Создать новый месяц', 'createNewMonths')
     .addItem('Предоставить доступ', 'giveAccess')
+    .addItem('test','test')
     .addToUi();
 }
-
 
 function listFilesInFolder() {
 // Функция очищает лист и наполняет его данными, указанными в data
@@ -17,16 +17,21 @@ function listFilesInFolder() {
   var folder = DriveApp.getFolderById("10KWbx1hopJq2sd-EdDvukGX5acp752bE");
   var contents = folder.getFiles();
 
-
   var file, data, sheet = SpreadsheetApp.getActiveSheet();
   sheet.clear();
 
   // Список заголовков таблицы
-  sheet.appendRow(["Отделение","Изменен","Доступ", "Права", "Ссылка", "Листы"]);
+  sheet.appendRow(["Отделение","Изменен","Доступ", "Права", "Ссылка", "Листы", "Владелец"]);
 
   while (contents.hasNext()) {
 
     file = contents.next();
+    
+    try{
+      file.setOwner('techpod.smartlab@gmail.com');
+    } catch(e) {
+      Logger.log('error');
+    }
     
     // Список искомых значений
     data = [
@@ -36,6 +41,7 @@ function listFilesInFolder() {
       file.getSharingPermission(),
       file.getUrl(),
       SpreadsheetApp.open(file).getSheets().map(function(s) {return s.getSheetName()}).join(', '),
+      file.getOwner().getEmail(),
     ];
 
     sheet.appendRow(data);
@@ -126,13 +132,31 @@ function giveAccess() {
   var file, protections, data, sheet = SpreadsheetApp.getActiveSheet();
   
 
-
+  var ui = SpreadsheetApp.getUi();
   while (contents.hasNext()) {
   
     file = contents.next();
+    var editors = file.getEditors();
+    if( !(editors.indexOf('rashod1.smartlab@gmail.com') > 0) ) file.addEditor('rashod1.smartlab@gmail.com')
     protections = SpreadsheetApp.open(file).getProtections(SpreadsheetApp.ProtectionType.SHEET)
     for (protection of protections) {
-      protection.addEditor("aho3smartlab@gmail.com");
+      try {
+        protection.addEditor("rashod1.smartlab@gmail.com");
+      } catch (e) {
+        ui.alert(file.getName() + " " + e);
+      }
+    }
   }
-  }
+}
+
+function test() {
+  var ss = SpreadsheetApp.openByUrl("https://docs.google.com/spreadsheets/d/1C-mQuPcZYXU5w_YC_qTeiGr6gwgMdeVx0UvTEnLCcH0/edit#gid=213491689");
+  var sheet = ss.getSheetByName('05.2020');
+  
+  var items = sheet.getRange('B:B').getValues();
+  var inventoryIndex = items.flat().indexOf("ИНВЕНТАРЬ (кол-во указывайте раз в месяц - в графу факт. остаток на начало месяца). При изменении остатка вносится количество расхода на текущий день.");
+  var inventoryRow = inventoryIndex + 1;
+
+  sheet.getRange('A1').setValue(inventoryRow);
+  
 }
