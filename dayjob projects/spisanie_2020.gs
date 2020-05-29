@@ -136,9 +136,8 @@ function giveAccess() {
   while (contents.hasNext()) {
   
     file = contents.next();
-    var editors = file.getEditors();
-    if( !(editors.indexOf('rashod1.smartlab@gmail.com') > 0) ) file.addEditor('rashod1.smartlab@gmail.com')
-    protections = SpreadsheetApp.open(file).getProtections(SpreadsheetApp.ProtectionType.SHEET)
+
+    protections = SpreadsheetApp.open(file).getProtections(SpreadsheetApp.ProtectionType.RANGE)
     for (protection of protections) {
       try {
         protection.addEditor("rashod1.smartlab@gmail.com");
@@ -150,13 +149,17 @@ function giveAccess() {
 }
 
 function test() {
-  var ss = SpreadsheetApp.openByUrl("https://docs.google.com/spreadsheets/d/1C-mQuPcZYXU5w_YC_qTeiGr6gwgMdeVx0UvTEnLCcH0/edit#gid=213491689");
-  var sheet = ss.getSheetByName('05.2020');
-  
-  var items = sheet.getRange('B:B').getValues();
-  var inventoryIndex = items.flat().indexOf("ИНВЕНТАРЬ (кол-во указывайте раз в месяц - в графу факт. остаток на начало месяца). При изменении остатка вносится количество расхода на текущий день.");
-  var inventoryRow = inventoryIndex + 1;
 
-  sheet.getRange('A1').setValue(inventoryRow);
+  var file = DriveApp.getFileById("1C-mQuPcZYXU5w_YC_qTeiGr6gwgMdeVx0UvTEnLCcH0");
+  
+  var ss = SpreadsheetApp.open(file)
+  var protections = ss.getProtections(SpreadsheetApp.ProtectionType.RANGE)
+  ss.toast(protections)
+  for (protection of protections) {
+    protection.removeEditors(protection.getEditors());
+
+    protection.addEditor("rashod1.smartlab@gmail.com");
+    
+  }
   
 }
