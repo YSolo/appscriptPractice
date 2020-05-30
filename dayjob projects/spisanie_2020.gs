@@ -27,12 +27,7 @@ function listFilesInFolder() {
 
     file = contents.next();
     
-    try{
-      file.setOwner('techpod.smartlab@gmail.com');
-    } catch(e) {
-      Logger.log('error');
-    }
-    
+   
     // Список искомых значений
     data = [
       '=HYPERLINK("' + file.getUrl() + '";"' + file.getName() + '")',
@@ -96,9 +91,11 @@ function createNewMonth(file, template, newMonthName) {
   // Записываем список названий листов
   var sheetNames = ss.getSheets().map(function(s) {return s.getSheetName()});
   
-  // * TODO: добавить функцию логирования
+  
   // Проверяем, есть ли текущий месяц. Если нет - ничего не делаем
   if ( sheetNames.includes(newMonthName) || sheetNames.includes("ШАБЛОН") ) return;
+  
+  
 
   // Копируем шаблон 
   var newMonthSheet = template.copyTo(ss);
@@ -122,6 +119,7 @@ function createNewMonths() {
   while (contents.hasNext()) {
     file = contents.next();
     createNewMonth(file, template, newMonthName);
+    Logger.log("done with: " + file.getName());
   }
 }
 
